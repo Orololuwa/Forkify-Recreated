@@ -198,6 +198,43 @@ window.addEventListener('load', () => {
 });
 
 
+/**
+ * ?demo=pizza searches on load, lists the results, and opens the first one.
+ * An existing hash still opens that recipe; the list is filled in around it.
+ */
+const controlDemo = async () => {
+    const query = new URLSearchParams(window.location.search).get('demo');
+    const trimmed = query && query.trim();
+    if (!trimmed) return;
+
+    state.search = new Search(trimmed);
+    elements.searchInput.value = trimmed;
+    searchView.clearResults();
+    renderLoader(elements.searchRes);
+
+    try {
+        await state.search.getResults();
+        clearLoader();
+
+        const results = state.search.results;
+        if (!results || !results.length) return;
+
+        searchView.renderResult(results);
+
+        const currentId = window.location.hash.replace('#', '');
+        if (!currentId) {
+            window.location.hash = results[0].recipe_id;
+        } else {
+            searchView.highlightSelected(currentId);
+        }
+    } catch (err) {
+        clearLoader();
+    }
+};
+
+window.addEventListener('load', controlDemo);
+
+
 //Handling recipe button clicks
 elements.recipe.addEventListener('click', e => {
     if (e.target.matches('.btn-dec, .btn-dec *')){
